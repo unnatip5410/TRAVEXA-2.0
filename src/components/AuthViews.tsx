@@ -1,0 +1,12 @@
+"use client";
+
+import Link from "next/link";
+import { ArrowRight, LockKeyhole } from "lucide-react";
+import { useState } from "react";
+
+export function LoginView() {
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [message, setMessage] = useState("");
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); setMessage("Working..."); const form = new FormData(event.currentTarget); try { const response = await fetch(`/api/auth/${mode}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) }); const data = await response.json(); if (!response.ok) { setMessage(data.error ?? "Unable to continue."); return; } const requested = new URLSearchParams(window.location.search).get("next"); const next = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/account"; window.location.assign(next); } catch { setMessage("Unable to reach the account service. Please try again."); } };
+  return <main className="auth-page"><div className="auth-art"><span className="brand-mark">T</span><h1>Travel begins<br /><em>with intention.</em></h1><p>Save the places that matter and turn them into journeys.</p></div><div className="auth-panel"><Link className="brand" href="/"><span className="brand-mark">T</span><span>TRAVEXA</span></Link><div className="auth-tabs"><button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>Sign in</button><button className={mode === "register" ? "active" : ""} onClick={() => setMode("register")}>Create account</button></div><form onSubmit={submit}><label><span>{mode === "register" ? "NAME" : "EMAIL"}</span>{mode === "register" ? <input required name="name" placeholder="Your name" /> : <input required name="email" type="email" placeholder="you@example.com" />}</label>{mode === "register" && <label><span>EMAIL</span><input required name="email" type="email" placeholder="you@example.com" /></label>}<label><span>PASSWORD</span><input required name="password" type="password" minLength={8} placeholder="8 characters minimum" /></label><button className="button button-dark" type="submit">{mode === "login" ? "Sign in" : "Create account"} <ArrowRight size={16} /></button></form><p className="auth-message">{message}</p><div className="auth-note"><LockKeyhole size={15} /> Secure session cookie · Demo database ready for production provider</div></div></main>;
+}

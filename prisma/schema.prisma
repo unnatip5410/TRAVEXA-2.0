@@ -1,0 +1,400 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  EDITOR
+}
+
+enum BookingStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  name String
+  role Role @default(USER)
+  locale String @default("EN")
+  currency String @default("INR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  trips Trip[]
+  bookings Booking[]
+  reviews Review[]
+  savedDestinations SavedDestination[]
+  packingLists PackingList[]
+  budgets Budget[]
+  notifications Notification[]
+  conversations AIConversation[]
+  searches SearchHistory[]
+  analytics AnalyticsEvent[]
+  preferences UserPreference?
+  visitors Visitor[]
+}
+
+model Region {
+  id String @id @default(cuid())
+  name String @unique
+  countries Country[]
+  destinations Destination[]
+}
+
+model Country {
+  id String @id @default(cuid())
+  name String @unique
+  regionId String
+  region Region @relation(fields: [regionId], references: [id])
+  states State[]
+  destinations Destination[]
+}
+
+model State {
+  id String @id @default(cuid())
+  name String
+  countryId String
+  country Country @relation(fields: [countryId], references: [id])
+  destinations Destination[]
+}
+
+model Category {
+  id String @id @default(cuid())
+  name String @unique
+  destinations Destination[]
+}
+
+model Season {
+  id String @id @default(cuid())
+  name String @unique
+  destinations Destination[]
+}
+
+model Destination {
+  id String @id @default(cuid())
+  slug String @unique
+  name String
+  description String
+  longDescription String?
+  knownFor Json
+  bestFor Json
+  vibe String?
+  budgetLevel String?
+  approximateBudget String?
+  dailyBudget String?
+  idealDuration String?
+  weather String?
+  activities Json
+  attractions Json
+  localFood Json
+  culture Json
+  experiences Json
+  transport Json
+  safety String?
+  accessibility String?
+  latitude Float?
+  longitude Float?
+  rating Float @default(0)
+  regionId String?
+  region Region? @relation(fields: [regionId], references: [id])
+  countryId String?
+  country Country? @relation(fields: [countryId], references: [id])
+  stateId String?
+  state State? @relation(fields: [stateId], references: [id])
+  categoryId String?
+  category Category? @relation(fields: [categoryId], references: [id])
+  seasonId String?
+  season Season? @relation(fields: [seasonId], references: [id])
+  images DestinationImage[]
+  videos DestinationVideo[]
+  reviews Review[]
+  savedBy SavedDestination[]
+  trips Trip[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DestinationImage {
+  id String @id @default(cuid())
+  url String
+  alt String
+  sortOrder Int @default(0)
+  destinationId String
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+}
+
+model DestinationVideo {
+  id String @id @default(cuid())
+  url String
+  thumbnail String?
+  title String
+  destinationId String
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id String @id @default(cuid())
+  name String
+  description String?
+  destinationId String
+}
+
+model Attraction {
+  id String @id @default(cuid())
+  name String
+  description String?
+  destinationId String
+}
+
+model Hotel {
+  id String @id @default(cuid())
+  name String
+  city String
+  demoRate String
+  rating Float @default(0)
+}
+
+model TransportOption {
+  id String @id @default(cuid())
+  type String
+  from String
+  to String
+  duration String
+  demoCost String
+}
+
+model Route {
+  id String @id @default(cuid())
+  from String
+  to String
+  distance String
+  duration String
+  options Json
+}
+
+model Trip {
+  id String @id @default(cuid())
+  title String
+  startDate DateTime?
+  endDate DateTime?
+  travellers Int @default(1)
+  style String?
+  budget String?
+  travelDate DateTime?
+  preferences Json?
+  travelers Json?
+  status BookingStatus @default(DRAFT)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destinationId String?
+  destination Destination? @relation(fields: [destinationId], references: [id])
+  days TripDay[]
+  bookings Booking[]
+  budgetPlan Budget?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Visitor {
+  id String @id @default(cuid())
+  name String
+  email String
+  phone String?
+  destination String?
+  message String?
+  consent Boolean @default(false)
+  status String @default("NEW")
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TripDay {
+  id String @id @default(cuid())
+  dayNumber Int
+  title String
+  activities Json
+  estimatedCost String?
+  distance String?
+  tripId String
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id String @id @default(cuid())
+  reference String @unique
+  status BookingStatus @default(DRAFT)
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  tripId String
+  trip Trip @relation(fields: [tripId], references: [id])
+  payment Payment?
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id String @id @default(cuid())
+  transactionId String @unique
+  amount Int
+  currency String
+  method String
+  status PaymentStatus @default(PENDING)
+  demoMode Boolean @default(true)
+  bookingId String @unique
+  booking Booking @relation(fields: [bookingId], references: [id])
+  receipt PaymentReceipt?
+  createdAt DateTime @default(now())
+}
+
+model PaymentReceipt {
+  id String @id @default(cuid())
+  receiptNumber String @unique
+  paymentId String @unique
+  payment Payment @relation(fields: [paymentId], references: [id])
+  payload Json
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id String @id @default(cuid())
+  rating Int
+  title String
+  body String
+  travelDate DateTime?
+  photoUrl String?
+  helpful Int @default(0)
+  approved Boolean @default(false)
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  destinationId String
+  destination Destination @relation(fields: [destinationId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SavedDestination {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destinationId String
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([userId, destinationId])
+}
+
+model PackingList {
+  id String @id @default(cuid())
+  name String
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination String
+  duration Int
+  season String
+  items PackingItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PackingItem {
+  id String @id @default(cuid())
+  label String
+  category String
+  packed Boolean @default(false)
+  listId String
+  list PackingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+}
+
+model Budget {
+  id String @id @default(cuid())
+  currency String @default("INR")
+  travellers Int
+  duration Int
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId String @unique
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+}
+
+model Expense {
+  id String @id @default(cuid())
+  category String
+  label String
+  amount Int
+  budgetId String
+  budget Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id String @id @default(cuid())
+  title String
+  message String
+  read Boolean @default(false)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model AIConversation {
+  id String @id @default(cuid())
+  title String
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AIMessage[]
+  createdAt DateTime @default(now())
+}
+
+model AIMessage {
+  id String @id @default(cuid())
+  role String
+  content String
+  conversationId String
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model AnalyticsEvent {
+  id String @id @default(cuid())
+  name String
+  path String?
+  metadata Json?
+  userId String?
+  user User? @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model SearchHistory {
+  id String @id @default(cuid())
+  query String
+  userId String?
+  user User? @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model UserPreference {
+  id String @id @default(cuid())
+  language String @default("EN")
+  theme String @default("light")
+  textSize String @default("normal")
+  highContrast Boolean @default(false)
+  reducedMotion Boolean @default(false)
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
