@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "TRAVEXA | Premium Travel Discovery, Planning & Assistance",
   description: "Explore India and discover the world with intention. Intelligent AI planning, verified routes, stays, and unhurried journeys.",
   keywords: ["travel discovery", "trip planner", "incredible india", "luxury travel", "slow travel", "ai travel assistant"],
+  verification: {
+    google: "a5mbzobj6K8iT12CW7yI0sw-t8Kc_pn5-Ux9ey2VVps",
+  },
   openGraph: {
     title: "TRAVEXA | Explore India. Discover the World.",
     description: "Meaningful miles, beautifully planned.",
